@@ -21,6 +21,10 @@ public class ReadExcelDemo {
         String diretorio = "/tmp/";
         String nomeArquivo = "teste1";
 
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        String date = new SimpleDateFormat("ddMMyyyyss").format(timestamp.getTime());
+        ArrayList<String> listaId = new ArrayList<>();
+
         try {
             FileInputStream file = new FileInputStream(new File(diretorio + nomeArquivo + ".xlsx"));
             //Create Workbook instance holding reference to .xlsx file
@@ -32,11 +36,9 @@ public class ReadExcelDemo {
             linhas = n + 1;
             //Iterate through each rows one by one
             Iterator<Row> rowIterator = sheet.iterator();
-
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            String date = new SimpleDateFormat("ddMMyyyyss").format(timestamp.getTime());
             FileWriter arq = new FileWriter(diretorio + nomeArquivo.concat(date) + ".sql");
             PrintWriter gravarArq = new PrintWriter(arq);
+
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
@@ -67,6 +69,7 @@ public class ReadExcelDemo {
 
                                 if (cont == 0) {
                                     sid = cell.getStringCellValue();
+                                    listaId.add(sid);
                                 }
 
                                 cont++;
@@ -85,9 +88,36 @@ public class ReadExcelDemo {
             }
             file.close();
             arq.close();
+            gravarArq.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        //gerar arquivo de qa
+        FileWriter arqQA = new FileWriter(diretorio + nomeArquivo.concat("QA").concat(date) + ".sql");
+        PrintWriter gravarArqQA = new PrintWriter(arqQA);
+
+        String scriptQA = "select count(*) from compras.identificador i where id in ( ";
+
+        gravarArqQA.printf(scriptQA);
+
+        int cont2 = 1;
+
+        for (String serial : listaId) {
+
+            if (cont2 == listaId.size()) {
+                gravarArqQA.printf(serial);
+            } else {
+                gravarArqQA.printf(serial.concat(","));
+
+            }
+
+            cont2++;
+        }
+
+        gravarArqQA.printf(") and obuid is NULL");
+        gravarArqQA.close();
+
 
     }
 }
